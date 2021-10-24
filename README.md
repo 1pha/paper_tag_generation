@@ -1,6 +1,4 @@
-2021 Fall XAI606 Project Proposal Baseline
-
-2020010429 Daehyun Cho
+2021 Fall XAI606 Project Proposal Baseline | 2020010429 Daehyun Cho
 
 # Paper Title + Abstract to Tag Generation Task
 

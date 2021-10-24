@@ -56,6 +56,7 @@ All files inside `paper_clf`.
     ```
     python paper_clf/run.py --do_predict --model_name_or_path=finetuned_model
     ```
+    + We have problem with making prediction from Seq2Seq Trainer. This issue is currently does not mess up with training process, so don't mind!
 
 ## Pretraining Masked Lanuage Modeling
 TBD. Don't do it by the way.

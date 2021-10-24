@@ -2,6 +2,8 @@
 data/
 raw_data/
 outputs*
+assets/
+wandb/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -159,9 +159,9 @@ def main():
                 padding=data_args.padding,
                 truncation=data_args.truncation,
             )
-            tokenized_example["labels"] = [
-                [tokenizer.bos_token_id] for i in range(len(examples["arxiv_id"]))
-            ]
+            # tokenized_example["labels"] = [
+            #     [tokenizer.bos_token_id] for i in range(len(examples["arxiv_id"]))
+            # ]
             tokenized_example["id"] = examples["arxiv_id"]
 
             return tokenized_example
@@ -179,7 +179,7 @@ def main():
             test_dataset=test_dataset,
             max_length=data_args.max_target_length,
             num_beams=data_args.num_beams,
-            metric_key_prefix="eval_bleu",
+            metric_key_prefix="predict",
         )
         generated_tag = tokenizer.batch_decode(
             predictions.predictions, skip_special_tokens=True

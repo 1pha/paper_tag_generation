@@ -56,5 +56,13 @@ All files inside `paper_clf`.
     ```
     + Through this, you will use `finetuned_model` which is your model to predict the testset. In `prediction/predictions.json`, the prediction result will be saved with `arxiv_id: prediction` format.
 
+## Requirements
+```
+python==3.9.7
+pytorch==1.10.0
+transformers==4.11.3
+datasets==1.14.0
+```
+
 ## Pretraining Masked Lanuage Modeling
 This is removed, since training the generation model itself is enromous. Please focus on training the generation model.

@@ -52,9 +52,9 @@ All files inside `paper_clf`.
    + Put the saved/trained model directory in `model_name_or_path` to use finetuned model that you have trained.
 3. To make predictions with test data
     ```
-    python paper_clf/run.py --do_predict --model_name_or_path=finetuned_model
+    python paper_clf/run.py --do_predict --model_name_or_path=finetuned_model --output_dir=prediction
     ```
-    + We have problem with making prediction from Seq2Seq Trainer. This issue is currently does not mess up with training process, so don't mind!
+    + Through this, you will use `finetuned_model` which is your model to predict the testset. In `prediction/predictions.json`, the prediction result will be saved with `arxiv_id: prediction` format.
 
 ## Pretraining Masked Lanuage Modeling
-TBD. Don't do it by the way.
+This is removed, since training the generation model itself is enromous. Please focus on training the generation model.

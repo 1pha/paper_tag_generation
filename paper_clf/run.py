@@ -1,13 +1,16 @@
 import sys
 import json
+from tqdm import tqdm
 import logging
 
+from torch.utils.data import DataLoader, SequentialSampler
 from transformers import HfArgumentParser, TrainingArguments
 from transformers import AutoConfig, AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import (
     Seq2SeqTrainingArguments,
     Seq2SeqTrainer,
     DataCollatorForSeq2Seq,
+    DataCollatorWithPadding,
 )
 from datasets import load_from_disk
 
@@ -33,20 +36,26 @@ def main():
         handlers=[logging.StreamHandler(sys.stdout)],
     )
 
-    # verbosity 설정 : Transformers logger의 정보로 사용합니다 (on main process only)
     logger.info("Training/evaluation parameters %s", training_args)
 
-    # 2. Load Model
+    # 1. Load Model
     model_name = model_args.model_name_or_path
-    config = AutoConfig.from_pretrained(model_name, cache_dir=None,)
+    config = AutoConfig.from_pretrained(
+        model_name,
+        cache_dir=None,
+    )
     tokenizer = AutoTokenizer.from_pretrained(
-        model_name, cache_dir=None, use_fast=True,
+        model_name,
+        cache_dir=None,
+        use_fast=True,
     )
     model = AutoModelForSeq2SeqLM.from_pretrained(
-        model_name, config=config, cache_dir=None,
+        model_name,
+        config=config,
+        cache_dir=None,
     )
 
-    # 1. Load Data
+    # 2. Load Data
     tag_dataset = load_from_disk("./data/paperswithcode/")
 
     def preprocess(examples):
@@ -99,7 +108,9 @@ def main():
         )
 
     data_collator = DataCollatorForSeq2Seq(
-        tokenizer, model=model, pad_to_multiple_of=None,
+        tokenizer,
+        model=model,
+        pad_to_multiple_of=None,
     )
 
     args = Seq2SeqTrainingArguments(
@@ -152,19 +163,13 @@ def main():
 
         def test_preprocess(examples):
 
-            tokenized_example = tokenizer(
+            return tokenizer(
                 examples["title"],
                 examples["abstract"],
                 max_length=data_args.max_source_length,
                 padding=data_args.padding,
                 truncation=data_args.truncation,
             )
-            # tokenized_example["labels"] = [
-            #     [tokenizer.bos_token_id] for i in range(len(examples["arxiv_id"]))
-            # ]
-            tokenized_example["id"] = examples["arxiv_id"]
-
-            return tokenized_example
 
         test_dataset = tag_dataset["test"]
         remove_columns = test_dataset.column_names
@@ -175,26 +180,41 @@ def main():
             desc="Preprocess Test Dataset",
         )
 
-        predictions = trainer.predict(
-            test_dataset=test_dataset,
-            max_length=data_args.max_target_length,
-            num_beams=data_args.num_beams,
-            metric_key_prefix="predict",
+        test_dataloader = DataLoader(
+            test_dataset,
+            batch_size=trainer.args.eval_batch_size,
+            collate_fn=DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8),
+            drop_last=trainer.args.dataloader_drop_last,
+            pin_memory=trainer.args.dataloader_pin_memory,
+            sampler=SequentialSampler(test_dataset),
         )
-        generated_tag = tokenizer.batch_decode(
-            predictions.predictions, skip_special_tokens=True
-        )
+
+        predictions = {}
+        batch_size = trainer.args.eval_batch_size
+        for step, batch in tqdm(
+            enumerate(test_dataloader), desc="Make Predictions with testset"
+        ):
+
+            arxiv_id = tag_dataset["test"]["arxiv_id"][
+                step * batch_size : (step + 1) * batch_size
+            ]
+
+            input_ids = batch["input_ids"].cuda()
+            prediction = trainer.model.generate(
+                input_ids=input_ids,
+                max_length=data_args.max_target_length,
+                num_beams=data_args.num_beams,
+                no_repeat_ngram_size=data_args.no_repeat_ngram_size,
+                early_stopping=data_args.early_stopping,
+                do_sample=data_args.do_sample,
+            )
+            prediction = tokenizer.batch_decode(prediction, skip_special_tokens=True)
+            predictions.update({k: v for k, v in zip(arxiv_id, prediction)})
+
         prediction_path = f"{training_args.output_dir}/predictions.json"
         logger.info(f"Save test data predictions to {prediction_path}")
         with open(prediction_path, "w", encoding="utf-8") as writer:
-            writer.write(
-                json.dumps(
-                    {k: v for k, v in zip(test_dataset["id"], generated_tag)},
-                    indent=4,
-                    ensure_ascii=False,
-                )
-                + "\n"
-            )
+            writer.write(json.dumps(predictions, indent=4, ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":

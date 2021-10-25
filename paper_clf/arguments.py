@@ -36,6 +36,7 @@ class DataArguments:
     For Data
     """
 
+    # For Train / Eval Preprocessing
     train_subsample_ratio: float = field(
         default=1,
         metadata={
@@ -51,19 +52,22 @@ class DataArguments:
     max_source_length: int = field(
         default=512, metadata={"help": "Controls input source length."}
     )
-    max_target_length: int = field(
-        default=8,
-        metadata={"help": "Maximum length for generation. No need to be long."},
-    )
     padding: bool = field(
         default=True,
         metadata={"help": "Flag to add padding after inputs being tokenized."},
     )
     truncation: bool = field(
-        default=False,
+        default=True,
         metadata={
             "help": "Whether to use first part of the sequence if longer than maximum"
         },
+    )
+    # For Text-generation in Prediction
+    # You can add arguments for generation and edit `run.py` script code.
+    # Reference: https://huggingface.co/blog/how-to-generate
+    max_target_length: int = field(
+        default=16,
+        metadata={"help": "Maximum length for generation. No need to be long."},
     )
     num_beams: int = field(
         default=2,
@@ -71,4 +75,13 @@ class DataArguments:
             "help": "Number of beams to be used in the beam search during generation."
         },
     )
-
+    no_repeat_ngram_size: int = field(
+        default=2, metadata={"help": "Whether to not see n-gram repeatedly appearing."}
+    )
+    early_stopping: bool = field(
+        default=True,
+        metadata={"help": "End generating when all beam reached the <eos> token."},
+    )
+    do_sample: bool = field(
+        default=True, metadata={"help": "Use sampling when during generation."}
+    )

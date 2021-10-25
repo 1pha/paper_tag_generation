@@ -4,7 +4,13 @@ raw_data/
 outputs*
 assets/
 wandb/
-
+notebooks/
+sample_output/
+bart_finetune/
+angel_yk
+.vscode/
+*.tar.gz
+*.ini
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -36,7 +36,7 @@ def main():
         handlers=[logging.StreamHandler(sys.stdout)],
     )
 
-    logger.info("Training/evaluation parameters %s", training_args)
+    logger.info("TRAINING_ARGS %s", training_args)
 
     # 1. Load Model
     model_name = model_args.model_name_or_path
@@ -81,6 +81,8 @@ def main():
         return tokenized_example
 
     if training_args.do_train:
+
+        logger.info("[DATA] TRAINING DATA SETUP")
         train_dataset = tag_dataset["train"]
         train_dataset = train_dataset.select(
             range(int(data_args.train_subsample_ratio * len(train_dataset)))
@@ -94,6 +96,8 @@ def main():
         )
 
     if training_args.do_eval:
+
+        logger.info("[DATA] VALIDATION DATA SETUP")
         eval_dataset = tag_dataset["dev"]
         eval_dataset = eval_dataset.select(
             range(int(data_args.valid_subsample_ratio * len(eval_dataset)))
@@ -127,6 +131,7 @@ def main():
         logging_steps=10,
     )
 
+    logger.info("TRAINER SETUP")
     trainer = Seq2SeqTrainer(
         model=model,
         args=args,
@@ -138,6 +143,7 @@ def main():
 
     if training_args.do_train:
 
+        logger.info("START TRAINING")
         train_result = trainer.train(resume_from_checkpoint=None)
 
         metrics = train_result.metrics
@@ -149,6 +155,7 @@ def main():
 
     if training_args.do_eval:
 
+        logger.info("START EVALUATING THE DEV SET")
         metrics = trainer.evaluate(
             max_length=data_args.max_target_length,
             num_beams=data_args.num_beams,
